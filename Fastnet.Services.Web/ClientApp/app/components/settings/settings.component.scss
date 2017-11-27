@@ -1,0 +1,23 @@
+﻿.backup-settings {
+    td, th {
+        padding-left: 4px;
+        padding-right: 4px;
+        &.enabled-box {
+            text-align:center;
+        }
+    }
+    td {
+        .path {
+            margin-left: 4px;
+        }
+    }
+    
+}
+.help-text {
+    margin-top: 12px;
+    font-size: small;
+    font-style: italic;
+}
+.reload-button {
+    margin-top: 12px;
+}

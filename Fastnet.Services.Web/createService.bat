@@ -1,0 +1,1 @@
+sc create "Fastnet Services" binPath="C:\Program Files (x86)\Fastnet\Services\Fastnet.Services.Web.exe"

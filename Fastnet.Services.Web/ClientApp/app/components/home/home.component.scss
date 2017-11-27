@@ -1,0 +1,15 @@
+﻿.source-name {
+    font-size: larger;
+    font-weight: bold;
+}
+.path {
+    margin-left: 4px;
+}
+.backup-list {
+    .backup {
+        margin-left: 24px;
+        .not-started {
+            color: red;
+        }
+    }
+}
