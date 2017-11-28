@@ -80,7 +80,10 @@ namespace Fastnet.Services.Tasks
                         catch (Exception xe)
                         {
                             log.LogError(xe, $"backup failed {sf.DisplayName} to {backup.FullPath}");
-                            throw;
+                            backup.State = BackupState.Failed;
+                            backup.BackedUpOn = DateTimeOffset.Now;
+                            await db.SaveChangesAsync();
+                            //throw;
                         }
                         finally
                         {
@@ -93,12 +96,17 @@ namespace Fastnet.Services.Tasks
                     }
                     else
                     {
+
                         log.LogInformation($"Backup of {sf.DisplayName} is not pending");
                     }
                 }
             }
             else
             {
+                foreach (var d in DriveInfo.GetDrives())
+                {
+                    log.LogInformation($"Found drive {d.Name}, label {d.VolumeLabel}, ready = {d.IsReady}");
+                }
                 log.LogWarning($"Backup destination not available - no disk with volume label {options.BackupDriveLabel} found");
             }
             return null;
@@ -154,7 +162,7 @@ namespace Fastnet.Services.Tasks
                 await db.Backups.AddAsync(backup);
                 await db.SaveChangesAsync();
             }
-            result = backup.State == BackupState.NotStarted;
+            result = backup.State == BackupState.NotStarted || backup.State == BackupState.Failed;
             //switch (backup.State)
             //{
             //    case BackupState.Finished:

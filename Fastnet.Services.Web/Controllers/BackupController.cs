@@ -80,6 +80,18 @@ namespace Fastnet.Services.Web.Controllers
             var r = serviceOptions.IsBackupDestinationAvailable();
             return Task.FromResult(SuccessDataResult(r));
         }
+        [HttpGet("get/backup/destination")]
+        public Task<IActionResult> GetBackupDestination()
+        {
+            string volumeLabel = this.serviceOptions.BackupDriveLabel;
+            string destinationFolder = string.Empty;
+            var r = serviceOptions.IsBackupDestinationAvailable();
+            if(r)
+            {
+                destinationFolder = serviceOptions.GetBackupDestination();
+            }
+            return Task.FromResult(SuccessDataResult(new { volumeLabel = volumeLabel, available = r, destination = destinationFolder }));
+        }
         //[HttpGet("log/driveinfo")]
         //public Task<IActionResult> DriveInformation()
         //{

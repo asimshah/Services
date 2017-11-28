@@ -4,6 +4,7 @@
     {
         NotStarted,
         Started,
-        Finished
+        Finished,
+        Failed
     }
 }

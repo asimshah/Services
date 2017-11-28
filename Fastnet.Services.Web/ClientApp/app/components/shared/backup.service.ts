@@ -6,9 +6,9 @@ import { BaseService } from './base.service';
 export enum BackupState {
     NotStarted,
     Started,
-    Finished
+    Finished,
+    Failed
 }
-
 export enum SourceType {
     Folder,
     Website
@@ -29,6 +29,11 @@ export class Backup {
     state: BackupState;
     fullPath: string;
     sourceFolderid: number;
+}
+export class BackupDestinationInfo {
+    volumeLabel: string;
+    available: boolean;
+    destination: string;
 }
 
 @Injectable()
@@ -55,6 +60,10 @@ export class BackupService extends BaseService {
     async getBackupDestinationStatus(): Promise<boolean> {
         let query = `backup/get/backup/destinationStatus`;
         return this.stdGetDataResultQueryWithoutNull<boolean>(query);
+    }
+    async getBackupDestination(): Promise<BackupDestinationInfo> {
+        let query = `backup/get/backup/destination`;
+        return this.stdGetDataResultQueryWithoutNull<BackupDestinationInfo>(query);
     }
     private async stdGetDataResultQuery<T>(query: string): Promise<T | null> {
         let result = await this.query(query);
