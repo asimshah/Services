@@ -12,6 +12,7 @@ namespace Fastnet.Services.Tasks
                 //.AddSingleton<ScheduledTask, DiagnosticTask>()
                 .AddSingleton<ScheduledTask, ConfigureBackups>()
                 .AddSingleton<ScheduledTask, BackupService>()
+                .AddSingleton<ScheduledTask, PollingService>()
                 ;
             ;
             return services;

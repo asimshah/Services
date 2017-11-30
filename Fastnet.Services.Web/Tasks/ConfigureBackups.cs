@@ -39,8 +39,8 @@ namespace Fastnet.Services.Tasks
                 log.LogInformation("Configuration (appsettings) changed, starting ConfigureBackups");
                 this.schedulerService.ExecuteNow<ConfigureBackups>();
             });
-            var jobSchedule = this.options.Schedules?.FirstOrDefault(sc => string.Compare(sc.Name, this.GetType().Name) == 0);
-            schedule = jobSchedule?.Schedule ?? "0 0 1 */12 *";// default is At 00:00 AM, on day 1 of the month, every 12 months!! not useful!
+            var backupSchedule = this.options.ServiceSchedules?.FirstOrDefault(sc => string.Compare(sc.Name, this.GetType().Name) == 0);
+            schedule = backupSchedule?.Schedule ?? "0 0 1 */12 *";// default is At 00:00 AM, on day 1 of the month, every 12 months!! not useful!
             SetupPipeline();
         }
         public override TimeSpan StartAfter => TimeSpan.Zero;
