@@ -27,7 +27,7 @@ namespace Fastnet.Services.Tasks
         public ConfigureBackups(ILoggerFactory loggerFactory, WebDbContextFactory dbf, IHostedService hostedService,
             IOptionsMonitor<ServiceOptions> options) : base(loggerFactory)
         {
-            log.LogInformation("Configuration constructor called");
+            //log.LogInformation("Configuration constructor called");
             this.dbf = dbf;
             //dbf.GetWebDbContext<ServiceDb>().Database.EnsureCreated();
             this.options = options.CurrentValue;

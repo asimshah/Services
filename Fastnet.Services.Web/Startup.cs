@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Hosting.Server.Features;
 using Fastnet.Core.Web;
 using Fastnet.Services.Data;
 using Fastnet.Services.Tasks;
+using Microsoft.Extensions.Options;
 
 namespace Fastnet.Services.Web
 {

@@ -20,6 +20,7 @@ namespace Fastnet.Services.Tasks
         private readonly int sourceFolderId;
         private readonly ServiceOptions options;
         private ServiceDb db;
+        //public int SourceFolderId { get; set; }
         public BackupTask(ServiceOptions options, int sourceFolderId, WebDbContextFactory dbf, ILogger log)
         {
             this.options = options;
@@ -27,8 +28,7 @@ namespace Fastnet.Services.Tasks
             this.dbf = dbf;
             this.sourceFolderId = sourceFolderId;
         }
-        public int SourceFolderId { get; set; }
-        public string Name => "BackupTask";
+        public string Name => $"BackupTask - source folder id {sourceFolderId}";
         public TaskMethod ExecuteAsync => DoTask;
         private async Task<ITaskState> DoTask(ITaskState taskState, ScheduleMode mode, CancellationToken cancellationToken)
         {
@@ -39,7 +39,7 @@ namespace Fastnet.Services.Tasks
                     var sf = await db.SourceFolders
                         .Include(x => x.Backups)
                         .SingleAsync(x => x.Id == sourceFolderId);
-                    log.LogInformation($"Backup task for source {sf.DisplayName}");
+                    //log.LogInformation($"Backup task for source {sf.DisplayName}");
                     var destinationFolder = Path.Combine(options.GetBackupDestination(), sf.DisplayName);
                     if (!Directory.Exists(destinationFolder))
                     {
