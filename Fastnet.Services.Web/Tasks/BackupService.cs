@@ -8,11 +8,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Fastnet.Services.Web;
+using System.IO;
 
 namespace Fastnet.Services.Tasks
 {
     public class BackupService : ScheduledTask
     {
+        private string lastBackupDrive;
         private ServiceOptions options;
         private readonly string schedule;
         private ServiceDb db;
@@ -30,8 +32,45 @@ namespace Fastnet.Services.Tasks
         public override string Schedule => schedule;
         private async Task OnTaskStart()
         {
+            if(options.EnsureBackupDriveReady)
+            {
+                SpinUpBackupDrive();
+            }
             await SetupPipeline();
         }
+
+        private void SpinUpBackupDrive()
+        {
+            try
+            {
+                var available = options.IsBackupDestinationAvailable();
+                if(available)
+                {
+                    var fi = new FileInfo(options.GetBackupDestination());
+                    lastBackupDrive = fi.Directory.Root.Name;
+                }
+                else if(lastBackupDrive != null)
+                {
+                    var folder = Path.Combine(lastBackupDrive, options.BackupFolder);
+                    if(!Directory.Exists(folder))
+                    {
+                        Directory.CreateDirectory(folder);
+                        log.LogInformation($"{folder} created");
+                    }
+                    var filename = Path.Combine(folder, "probe.txt");
+                    if(File.Exists(filename))
+                    {
+                        File.Delete(filename);
+                    }
+                    File.CreateText(filename);
+                    File.Delete(filename);
+                }
+            }
+            catch (Exception)
+            {
+            }
+        }
+
         private async Task SetupPipeline()
         {
             List<IPipelineTask> list = new List<IPipelineTask>();
