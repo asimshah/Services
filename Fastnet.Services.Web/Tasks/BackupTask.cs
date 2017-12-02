@@ -119,7 +119,7 @@ namespace Fastnet.Services.Tasks
             var numberToKeep = 5;
             if(sf.Backups.Count() > numberToKeep)
             {
-                var toDelete = sf.Backups.OrderBy(x => x.ScheduledOn).Skip(numberToKeep).ToArray();
+                var toDelete = sf.Backups.OrderByDescending(x => x.ScheduledOn).Skip(numberToKeep).ToArray();
                 foreach(var b in toDelete)
                 {
                     try
