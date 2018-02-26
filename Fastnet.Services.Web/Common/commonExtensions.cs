@@ -13,12 +13,12 @@ namespace Fastnet.Services.Web
         //    var count = labels.Count(x => string.Compare(x, options.BackupDriveLabel, true) == 0);
         //    return count == 1;
         //}
-        private static bool IsBackupDriveAvailableOld(string driveLabel)
-        {
-            var labels = DriveInfo.GetDrives().Where(d => d.IsReady).Select(d => d.VolumeLabel);
-            var count = labels.Count(x =>  string.Compare(x, driveLabel, true) == 0);
-            return count == 1;
-        }
+        //private static bool IsBackupDriveAvailableOld(string driveLabel)
+        //{
+        //    var labels = DriveInfo.GetDrives().Where(d => d.IsReady).Select(d => d.VolumeLabel);
+        //    var count = labels.Count(x =>  string.Compare(x, driveLabel, true) == 0);
+        //    return count == 1;
+        //}
         private static (bool, string, string) IsBackupDriveAvailable(string driveLabel)
         {
             var di = DriveInfo.GetDrives().SingleOrDefault(x => x.IsReady && string.Compare(driveLabel, x.VolumeLabel, true) == 0);
@@ -35,14 +35,14 @@ namespace Fastnet.Services.Web
             }
             return (available, null);
         }
-        public static string GetDefaultBackupDestination(this ServiceOptions options)
-        {
-            if(IsBackupDriveAvailableOld(options.BackupDriveLabel))
-            {
-                var drive = DriveInfo.GetDrives().Single(x => string.Compare(x.VolumeLabel, options.BackupDriveLabel, true) == 0);
-                return Path.Combine(drive.Name, options.BackupFolder);
-            }
-            throw new Exception("Backup destination not available");
-        }
+        //public static string GetDefaultBackupDestination(this ServiceOptions options)
+        //{
+        //    if(IsBackupDriveAvailableOld(options.BackupDriveLabel))
+        //    {
+        //        var drive = DriveInfo.GetDrives().Single(x => string.Compare(x.VolumeLabel, options.BackupDriveLabel, true) == 0);
+        //        return Path.Combine(drive.Name, options.BackupFolder);
+        //    }
+        //    throw new Exception("Backup destination not available");
+        //}
     }
 }
