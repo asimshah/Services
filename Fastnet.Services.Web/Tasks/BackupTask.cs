@@ -20,7 +20,6 @@ namespace Fastnet.Services.Tasks
         private readonly int sourceFolderId;
         private readonly ServiceOptions options;
         private ServiceDb db;
-        //public int SourceFolderId { get; set; }
         public BackupTask(ServiceOptions options, int sourceFolderId, WebDbContextFactory dbf, ILogger log)
         {
             this.options = options;
@@ -32,15 +31,94 @@ namespace Fastnet.Services.Tasks
         public TaskMethod ExecuteAsync => DoTask;
         private async Task<ITaskState> DoTask(ITaskState taskState, ScheduleMode mode, CancellationToken cancellationToken)
         {
-            if (options.IsBackupDestinationAvailable())
+            //if (options.IsBackupDestinationAvailable())
+            //{
+            //    using (db = dbf.GetWebDbContext<ServiceDb>())
+            //    {
+            //        var sf = await db.SourceFolders
+            //            .Include(x => x.Backups)
+            //            .SingleAsync(x => x.Id == sourceFolderId);
+            //        //log.LogInformation($"Backup task for source {sf.DisplayName}");
+            //        var defaultDestinationFolder = Path.Combine(options.GetDefaultBackupDestination(), sf.DisplayName);
+            //        if (!Directory.Exists(defaultDestinationFolder))
+            //        {
+            //            Directory.CreateDirectory(defaultDestinationFolder);
+            //            log.LogInformation($"{defaultDestinationFolder} created");
+            //        }
+            //        var isPending = await IsBackupPending(sf);
+            //        if (isPending.result)
+            //        {
+            //            //log.LogInformation($"Backup of {sf.GetFullname()} to {destinationFolder} is required");
+            //            var backup = isPending.backup;
+            //            var namePart = sf.DisplayName;
+            //            var datePart = $"{(backup.ScheduledOn.ToString("yyyy.MM.dd"))}";
+            //            var backupFileName = $"{namePart}.{datePart}.zip";
+            //            backup.FullPath = Path.Combine(defaultDestinationFolder, backupFileName);
+            //            backup.State = BackupState.Started;
+            //            var now = DateTimeOffset.Now;
+            //            var todaysScheduledTime = new DateTimeOffset(now.Year, now.Month, now.Day, sf.ScheduledTime, 0, 0, now.Offset);
+            //            log.LogInformation($"Backup of {sf.DisplayName} to {defaultDestinationFolder} started ({(todaysScheduledTime.ToString("ddMMMyyyy HH:mm:ss"))})");
+            //            if (sf.Type == SourceType.Website)
+            //            {
+            //                TakeSiteOffline(sf);
+            //            }
+            //            await db.SaveChangesAsync();
+            //            try
+            //            {
+            //                if (File.Exists(backup.FullPath))
+            //                {
+            //                    File.Delete(backup.FullPath);
+            //                    log.LogWarning($"{backup.FullPath} deleted");
+            //                }
+            //                zip(sf.FullPath, backup.FullPath);
+            //                backup.State = BackupState.Finished;
+            //                backup.BackedUpOn = DateTimeOffset.Now;
+            //                await db.SaveChangesAsync();
+            //                log.LogInformation($"Backup of {sf.DisplayName} to {backup.FullPath} completed");
+            //            }
+            //            catch (Exception xe)
+            //            {
+            //                log.LogError(xe, $"backup failed {sf.DisplayName} to {backup.FullPath}");
+            //                backup.State = BackupState.Failed;
+            //                backup.BackedUpOn = DateTimeOffset.Now;
+            //                await db.SaveChangesAsync();
+            //                //throw;
+            //            }
+            //            finally
+            //            {
+            //                if (sf.Type == SourceType.Website)
+            //                {
+            //                    BringSiteOnline(sf);
+            //                }
+            //            }
+            //            await PurgeBackups(sf);
+            //        }
+            //        else
+            //        {
+
+            //            log.LogInformation($"Backup of {sf.DisplayName} is not pending");
+            //        }
+            //    }
+            //}
+            //else
+            //{
+            //    foreach (var d in DriveInfo.GetDrives())
+            //    {
+            //        log.LogInformation($"Found drive {d.Name}, label {d.VolumeLabel}, ready = {d.IsReady}");
+            //    }
+            //    log.LogWarning($"Backup destination not available - no disk with volume label {options.BackupDriveLabel} found");
+            //}
+            using (db = dbf.GetWebDbContext<ServiceDb>())
             {
-                using (db = dbf.GetWebDbContext<ServiceDb>())
+                var sf = await db.SourceFolders
+                    .Include(x => x.Backups)
+                    .SingleAsync(x => x.Id == sourceFolderId);
+                //log.LogInformation($"Backup task for source {sf.DisplayName}");
+                //var defaultDestinationFolder = Path.Combine(options.GetDefaultBackupDestination(), sf.DisplayName);
+                //var defaultDestinationFolder = sf.GetDestinationFolder(options);// Path.Combine(options.GetDefaultBackupDestination(), sf.DisplayName);
+                (bool available, string destinationFolder) = sf.GetDestinationFolder(options);
+                if (available)
                 {
-                    var sf = await db.SourceFolders
-                        .Include(x => x.Backups)
-                        .SingleAsync(x => x.Id == sourceFolderId);
-                    //log.LogInformation($"Backup task for source {sf.DisplayName}");
-                    var destinationFolder = Path.Combine(options.GetBackupDestination(), sf.DisplayName);
                     if (!Directory.Exists(destinationFolder))
                     {
                         Directory.CreateDirectory(destinationFolder);
@@ -96,23 +174,12 @@ namespace Fastnet.Services.Tasks
                     }
                     else
                     {
-
                         log.LogInformation($"Backup of {sf.DisplayName} is not pending");
                     }
                 }
             }
-            else
-            {
-                foreach (var d in DriveInfo.GetDrives())
-                {
-                    log.LogInformation($"Found drive {d.Name}, label {d.VolumeLabel}, ready = {d.IsReady}");
-                }
-                log.LogWarning($"Backup destination not available - no disk with volume label {options.BackupDriveLabel} found");
-            }
             return null;
         }
-
-
 
         private async Task PurgeBackups(SourceFolder sf)
         {

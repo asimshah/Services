@@ -35,6 +35,20 @@ namespace Fastnet.Services.Web.Controllers
             this.schedulerService = hostedService as SchedulerService;
             //this.serviceDb.Database.EnsureCreated();
         }
+        [HttpGet("test")]
+        public async Task<IActionResult> Test()
+        {
+            var sourceFolders = await serviceDb.SourceFolders
+                //.Include(x => x.Backups)
+                .ToArrayAsync();
+            foreach(var sf in sourceFolders)
+            {
+                (bool available, string folder) = sf.GetDestinationFolder(serviceOptions);
+                log.LogInformation($"{available}, {folder}");
+            }
+
+            return SuccessDataResult(sourceFolders);
+        }
         [HttpGet("get/enabled/sources")]
         public async Task<IActionResult> GetEnabledSourceFolders()
         {
@@ -74,24 +88,24 @@ namespace Fastnet.Services.Web.Controllers
             this.schedulerService.ExecuteNow<BackupService>();
             return Task.FromResult(SuccessDataResult(null));
         }
-        [HttpGet("get/backup/destinationStatus")]
-        public Task<IActionResult> GetBackupDestinationStatus()
-        {
-            var r = serviceOptions.IsBackupDestinationAvailable();
-            return Task.FromResult(SuccessDataResult(r));
-        }
-        [HttpGet("get/backup/destination")]
-        public Task<IActionResult> GetBackupDestination()
-        {
-            string volumeLabel = this.serviceOptions.BackupDriveLabel;
-            string destinationFolder = string.Empty;
-            var r = serviceOptions.IsBackupDestinationAvailable();
-            if(r)
-            {
-                destinationFolder = serviceOptions.GetBackupDestination();
-            }
-            return Task.FromResult(SuccessDataResult(new { volumeLabel = volumeLabel, available = r, destination = destinationFolder }));
-        }
+        //[HttpGet("get/backup/destinationStatus")]
+        //public Task<IActionResult> GetBackupDestinationStatus()
+        //{
+        //    var r = serviceOptions.IsBackupDestinationAvailable();
+        //    return Task.FromResult(SuccessDataResult(r));
+        //}
+        //[HttpGet("get/backup/destination")]
+        //public Task<IActionResult> GetBackupDestination()
+        //{
+        //    string volumeLabel = this.serviceOptions.BackupDriveLabel;
+        //    string destinationFolder = string.Empty;
+        //    var r = serviceOptions.IsBackupDestinationAvailable();
+        //    if(r)
+        //    {
+        //        destinationFolder = serviceOptions.GetDefaultBackupDestination();
+        //    }
+        //    return Task.FromResult(SuccessDataResult(new { volumeLabel = volumeLabel, available = r, destination = destinationFolder }));
+        //}
         //[HttpGet("log/driveinfo")]
         //public Task<IActionResult> DriveInformation()
         //{

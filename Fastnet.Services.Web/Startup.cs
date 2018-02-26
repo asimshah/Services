@@ -13,6 +13,7 @@ using Fastnet.Core.Web;
 using Fastnet.Services.Data;
 using Fastnet.Services.Tasks;
 using Microsoft.Extensions.Options;
+using Microsoft.EntityFrameworkCore;
 
 namespace Fastnet.Services.Web
 {
@@ -80,9 +81,10 @@ namespace Fastnet.Services.Web
                 try
                 {
                     var serviceDb = scope.ServiceProvider.GetService<ServiceDb>();
-                    serviceDb.Database.EnsureCreated();
-
-                    log.LogInformation($"ServiceDb existence checked");
+                    ServiceDbInitialiser.Initialise(serviceDb);
+                    //serviceDb.Database.EnsureCreated();
+                    //serviceDb.Database.Migrate();
+                    //log.LogInformation($"ServiceDb existence checked");
                 }
                 catch (Exception xe)
                 {

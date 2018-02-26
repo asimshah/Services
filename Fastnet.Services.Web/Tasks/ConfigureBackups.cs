@@ -29,7 +29,6 @@ namespace Fastnet.Services.Tasks
         {
             //log.LogInformation("Configuration constructor called");
             this.dbf = dbf;
-            //dbf.GetWebDbContext<ServiceDb>().Database.EnsureCreated();
             this.options = options.CurrentValue;
             this.schedulerService = hostedService as SchedulerService;
             options.OnChangeWithDelay((opt) =>
@@ -52,65 +51,90 @@ namespace Fastnet.Services.Tasks
             var configuredOn = DateTimeOffset.Now;
             using (db = dbf.GetWebDbContext<ServiceDb>())
             {
-                await db.Database.EnsureCreatedAsync();
-                //var sm = new ServerManager();
-                //foreach (var site in sm.Sites)
-                //{
-                //    await AddSiteFolder(configuredOn, site);
-                //}
+                var existingSources = await db.SourceFolders.Include(x => x.Backups).ToArrayAsync();
+                foreach(var existingSource in existingSources)
+                {
+                    if(!options.FolderSources.Any(x =>
+                        string.Compare(x.DisplayName, existingSource.DisplayName, true) == 0
+                        && string.Compare(x.Folder, existingSource.FullPath) == 0
+                        ))
+                    {
+                        // remove this instance from the database
+                        var backups = existingSource.Backups.ToArray();
+                        db.Backups.RemoveRange(backups);
+                        db.SourceFolders.Remove(existingSource);
+                        log.LogInformation($"Source {existingSource.DisplayName}, folder {existingSource.FullPath} removed");
+                        await db.SaveChangesAsync();
+                    }
+                }
                 foreach (var fs in options.FolderSources)
                 {
-                    await AddFolderSource(configuredOn, fs);
+                    var correspondingItem = existingSources.SingleOrDefault(x => string.Compare(x.DisplayName, fs.DisplayName, true) == 0);
+                    if(correspondingItem == null)
+                    {
+                        correspondingItem = new SourceFolder
+                        {
+                            BackupEnabled = false,
+                            DisplayName = fs.DisplayName,
+                            FullPath = fs.Folder,
+                            ScheduledTime = 3,
+                            Type = fs.Type,
+                            ConfiguredOn = DateTimeOffset.Now
+                        };
+                        await db.SourceFolders.AddAsync(correspondingItem);
+                    }
+                    correspondingItem.BackupDriveLabel = fs.BackupDriveLabel;
+                    correspondingItem.BackupFolder = fs.BackupFolder;
                 }
-                var staleList = await db.SourceFolders
-                    .Include(x => x.Backups)
-                    .Where(x => x.ConfiguredOn < configuredOn).ToArrayAsync();
-                foreach (var sf in staleList)
-                {
-                    var backups = sf.Backups.ToArray();
-                    db.Backups.RemoveRange(backups);
-                    db.SourceFolders.Remove(sf);
-                    log.LogInformation($"{sf.DisplayName} {sf.FullPath} (with {backups.Count()} backups) removed");
-                }
+                //var staleList = await db.SourceFolders
+                //    .Include(x => x.Backups)
+                //    .Where(x => x.ConfiguredOn < configuredOn).ToArrayAsync();
+                //foreach (var sf in staleList)
+                //{
+                //    //var backups = sf.Backups.ToArray();
+                //    //db.Backups.RemoveRange(backups);
+                //    //db.SourceFolders.Remove(sf);
+                //    //log.LogInformation($"{sf.DisplayName} {sf.FullPath} (with {backups.Count()} backups) removed");
+                //}
                 await db.SaveChangesAsync();
                 var count = db.SourceFolders.Count();
                 log.LogInformation($"found {count} source folders in database");
                 return null;// Task.FromResult<ITaskState>(null); 
             }
         }
-        private async Task AddFolderSource(DateTimeOffset configuredOn, FolderSource fs)
-        {
-            var folder = fs.Folder.ToLower();
-            var sf = await db.SourceFolders.SingleOrDefaultAsync(x => x.FullPath == folder);
-            if (sf != null && sf.DisplayName != fs.DisplayName)
-            {
-                log.LogError($"Source folder {folder} already exists in the database: display name {sf.DisplayName}");
-            }
-            else
-            {
-                sf = await db.SourceFolders.SingleOrDefaultAsync(x => string.Compare(x.DisplayName, fs.DisplayName, true) == 0);
-                if (sf == null)
-                {
-                    sf = new SourceFolder
-                    {
-                        BackupEnabled = false,
-                        DisplayName = fs.DisplayName,
-                        //Path = String.Empty,
-                        FullPath = folder,
-                        ScheduledTime = 3,
-                        Type = fs.Type
-                    };
-                    await db.SourceFolders.AddAsync(sf);
-                }
-                else
-                {
-                    sf.FullPath = fs.Folder.ToLower();
-                    sf.Type = fs.Type;
-                }
-                sf.ConfiguredOn = configuredOn;
-                await db.SaveChangesAsync();
-            }
-        }
+        //private async Task AddFolderSource(DateTimeOffset configuredOn, FolderSource fs)
+        //{
+        //    var folder = fs.Folder.ToLower();
+        //    var sf = await db.SourceFolders.SingleOrDefaultAsync(x => x.FullPath == folder);
+        //    if (sf != null && sf.DisplayName != fs.DisplayName)
+        //    {
+        //        log.LogError($"{folder} is already in use with a different display name: {sf.DisplayName}");
+        //        //log.LogError($"Source folder {folder} already exists in the database: display name {sf.DisplayName}");
+        //    }
+        //    else
+        //    {
+        //        sf = await db.SourceFolders.SingleOrDefaultAsync(x => string.Compare(x.DisplayName, fs.DisplayName, true) == 0);
+        //        if (sf == null)
+        //        {
+        //            sf = new SourceFolder
+        //            {
+        //                BackupEnabled = false,
+        //                DisplayName = fs.DisplayName,
+        //                FullPath = folder,
+        //                ScheduledTime = 3,
+        //                Type = fs.Type
+        //            };
+        //            await db.SourceFolders.AddAsync(sf);
+        //        }
+        //        else
+        //        {
+        //            sf.FullPath = fs.Folder.ToLower();
+        //            sf.Type = fs.Type;
+        //        }
+        //        sf.ConfiguredOn = configuredOn;
+        //        await db.SaveChangesAsync();
+        //    }
+        //}
         //private async Task AddSiteFolder(DateTimeOffset configuredOn, Site site)
         //{
         //    try

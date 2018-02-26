@@ -14,7 +14,6 @@ namespace Fastnet.Services.Data
         [JsonIgnore]
         [Timestamp]
         public byte[] TimeStamp { get; set; }
-
         public int SourceFolderId { get; set; }
         [JsonIgnore]
         public SourceFolder SourceFolder { get; set; }
