@@ -88,34 +88,11 @@ namespace Fastnet.Services.Web.Controllers
             this.schedulerService.ExecuteNow<BackupService>();
             return Task.FromResult(SuccessDataResult(null));
         }
-        //[HttpGet("get/backup/destinationStatus")]
-        //public Task<IActionResult> GetBackupDestinationStatus()
-        //{
-        //    var r = serviceOptions.IsBackupDestinationAvailable();
-        //    return Task.FromResult(SuccessDataResult(r));
-        //}
-        //[HttpGet("get/backup/destination")]
-        //public Task<IActionResult> GetBackupDestination()
-        //{
-        //    string volumeLabel = this.serviceOptions.BackupDriveLabel;
-        //    string destinationFolder = string.Empty;
-        //    var r = serviceOptions.IsBackupDestinationAvailable();
-        //    if(r)
-        //    {
-        //        destinationFolder = serviceOptions.GetDefaultBackupDestination();
-        //    }
-        //    return Task.FromResult(SuccessDataResult(new { volumeLabel = volumeLabel, available = r, destination = destinationFolder }));
-        //}
-        //[HttpGet("log/driveinfo")]
-        //public Task<IActionResult> DriveInformation()
-        //{
-        //    foreach (var drive in DriveInfo.GetDrives())
-        //    {
-        //        log.LogInformation($"Drive {drive.Name}, Label: {drive.VolumeLabel}, ready: {drive.IsReady}, type: {drive.DriveType}");
-        //    }
-        //    var fi = new FileInfo(this.serviceOptions.GetBackupDestination());
-        //    log.LogInformation($"backup root is {fi.Directory.Root.FullName}");
-        //    return Task.FromResult(SuccessDataResult(null));
-        //}
+        [HttpGet("start/replicationservice")]
+        public Task<IActionResult> StartReplicationService()
+        {
+            this.schedulerService.ExecuteNow<ReplicationService>();
+            return Task.FromResult(SuccessDataResult(null));
+        }
     }
 }

@@ -31,7 +31,7 @@ namespace Fastnet.Services.Web
             (bool available, string drive, string rootFolder) = IsBackupDriveAvailable(backupDriveLabel);
             if(available)
             {
-                return (available, Path.Combine(rootFolder, backupFolder));
+                return (available, Path.Combine(rootFolder, backupFolder, sf.DisplayName));
             }
             return (available, null);
         }

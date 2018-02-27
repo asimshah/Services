@@ -11,12 +11,12 @@ namespace Fastnet.Services.Tasks
         public static IServiceCollection AddFastnetServiceTasks(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddScheduler(configuration)
-            //.AddSingleton<ScheduledTask, DiagnosticTask>()
-            .AddSingleton<ScheduledTask, ConfigureBackups>()
-            .AddSingleton<ScheduledTask, BackupService>()
-            .AddSingleton<ScheduledTask, PollingService>()
-            ;
-            ;
+                //.AddSingleton<ScheduledTask, DiagnosticTask>()
+                .AddSingleton<ScheduledTask, ConfigureBackups>()
+                .AddSingleton<ScheduledTask, BackupService>()
+                .AddSingleton<ScheduledTask, ReplicationService>()
+                .AddSingleton<ScheduledTask, PollingService>()
+            ;           
             return services;
         }
     }

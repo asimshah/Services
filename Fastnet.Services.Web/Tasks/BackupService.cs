@@ -14,7 +14,7 @@ namespace Fastnet.Services.Tasks
 {
     public class BackupService : ScheduledTask
     {
-        private string lastBackupDrive;
+        //private string lastBackupDrive;
         private ServiceOptions options;
         private readonly string schedule;
         private ServiceDb db;
@@ -79,7 +79,16 @@ namespace Fastnet.Services.Tasks
                 var sources = await db.SourceFolders.Where(x => x.BackupEnabled).ToArrayAsync();
                 foreach (var sf in sources)
                 {
-                    list.Add(new BackupTask(options, sf.Id, dbf, CreatePipelineLogger<BackupTask>()));
+                    switch (sf.Type)
+                    {
+                        case SourceType.StandardSource:
+                        case SourceType.Website:
+                            list.Add(new BackupTask(options, sf.Id, dbf, CreatePipelineLogger<BackupTask>()));
+                            break;
+                        default:
+                            break;
+                    }
+                    
                 }
             }
             CreatePipeline(list);

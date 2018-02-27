@@ -177,6 +177,10 @@ namespace Fastnet.Services.Tasks
                         log.LogInformation($"Backup of {sf.DisplayName} is not pending");
                     }
                 }
+                else
+                {
+                    log.LogWarning($"{sf.DisplayName}: {sf.FullPath} not backed up as destination is not available" );
+                }
             }
             return null;
         }
