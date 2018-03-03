@@ -34,8 +34,9 @@ namespace Fastnet.Services.Web
             //services.AddMvc();
             services.AddOptions();
             services.Configure<ServiceOptions>(Configuration.GetSection("ServiceOptions"));
-            services.AddWebDbContextFactory(Configuration);
-            services.AddDbContext<ServiceDb>();
+            services.AddWebDbContext<ServiceDb, ServiceDbContextFactory, ServiceDbOptions>(Configuration, "ServiceDbOptions");
+            //services.AddWebDbContextFactory(Configuration);
+            //services.AddDbContext<ServiceDb>();
             services.AddMvc();
             services.AddFastnetServiceTasks(Configuration);
         }

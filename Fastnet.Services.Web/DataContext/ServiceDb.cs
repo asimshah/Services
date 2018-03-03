@@ -17,6 +17,10 @@ using System.Threading.Tasks;
 
 namespace Fastnet.Services.Data
 {
+    public class ServiceDbOptions : WebDbOptions
+    {
+
+    }
     public static class ServiceDbInitialiser
     {
         public static void Initialise(ServiceDb db)
@@ -25,7 +29,7 @@ namespace Fastnet.Services.Data
             var creator = db.Database.GetService<IDatabaseCreator>() as RelationalDatabaseCreator;
             var dbExists = creator.Exists();
 
-            if(dbExists)
+            if (dbExists)
             {
                 logger.LogInformation("ServiceDb exists");
             }
@@ -36,27 +40,29 @@ namespace Fastnet.Services.Data
             db.Database.Migrate();
             logger.LogInformation("The following migrations have been applied:");
             var migrations = db.Database.GetAppliedMigrations();
-            foreach(var migration in migrations)
+            foreach (var migration in migrations)
             {
                 logger.LogInformation($"\t{migration}");
             }
             db.Seed();
         }
     }
-    public class ServiceDbFactory : IDesignTimeDbContextFactory<ServiceDb>
+    public class ServiceDbFactory : DesignTimeWebDbContextFactory<ServiceDb>// IDesignTimeDbContextFactory<ServiceDb>
     {
         public ServiceDbFactory()
         {
         }
 
-        public ServiceDb CreateDbContext(string[] args)
-        {
-           
-            var optionsBuilder = new DbContextOptionsBuilder<ServiceDb>();
-            optionsBuilder.UseSqlServer(GetDesignTimeConnectionString());
-            return new ServiceDb(optionsBuilder.Options, null);
-        }
-        private string GetDesignTimeConnectionString()
+        //public ServiceDb CreateDbContext(string[] args)
+        //{
+
+        //    var optionsBuilder = new DbContextOptionsBuilder<ServiceDb>();
+        //    optionsBuilder.UseSqlServer(GetDesignTimeConnectionString());
+        //    return new ServiceDb(optionsBuilder.Options, null, null);
+        //}
+
+
+        protected override string GetDesignTimeConnectionString()
         {
             var path = @"C:\devroot\Standard2\Services\Fastnet.Services.Web";
             var databaseFilename = @"ServiceDb.mdf";
@@ -77,11 +83,18 @@ namespace Fastnet.Services.Data
             return csb.ToString();
         }
     }
+
+    public class ServiceDbContextFactory : WebDbContextFactory
+    {
+        public ServiceDbContextFactory(IOptions<ServiceDbOptions> options, IServiceProvider sp) : base(options, sp)
+        {
+        }
+    }
     public class ServiceDb : WebDbContext
     {
         public DbSet<SourceFolder> SourceFolders { get; set; }
         public DbSet<Backup> Backups { get; set; }
-        public ServiceDb(DbContextOptions<ServiceDb> contextOptions, IServiceProvider sp) : base(contextOptions, sp)
+        public ServiceDb(DbContextOptions<ServiceDb> contextOptions, IOptions<ServiceDbOptions> dbOptions, IServiceProvider sp) : base(contextOptions, dbOptions, sp)
         {
 
         }
