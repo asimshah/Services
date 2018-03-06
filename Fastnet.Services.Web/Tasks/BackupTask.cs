@@ -16,11 +16,11 @@ namespace Fastnet.Services.Tasks
     public class BackupTask : IPipelineTask
     {
         private readonly ILogger log;
-        private readonly WebDbContextFactory dbf;
+        private readonly ServiceDbContextFactory dbf;
         private readonly int sourceFolderId;
         private readonly ServiceOptions options;
         private ServiceDb db;
-        public BackupTask(ServiceOptions options, int sourceFolderId, WebDbContextFactory dbf, ILogger log)
+        public BackupTask(ServiceOptions options, int sourceFolderId, ServiceDbContextFactory dbf, ILogger log)
         {
             this.options = options;
             this.log = log;

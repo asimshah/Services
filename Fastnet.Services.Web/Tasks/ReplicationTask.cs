@@ -13,6 +13,35 @@ using System.Threading.Tasks;
 
 namespace Fastnet.Services.Tasks
 {
+    public static class fileInfoExtensions
+    {
+        public static async Task CopyToExactAsync(this FileInfo sourceFile, string targetName)
+        {
+            using (var ss = sourceFile.OpenRead())
+            {
+                using (var ds = File.Create(targetName))
+                {
+                    await ss.CopyToAsync(ds);
+                }
+            }
+            var destination = new FileInfo(targetName);
+            if (destination.IsReadOnly)
+            {
+
+                destination.IsReadOnly = false;
+                destination.CreationTime = sourceFile.CreationTime;
+                destination.LastWriteTime = sourceFile.LastWriteTime;
+                destination.LastAccessTime = sourceFile.LastAccessTime;
+                destination.IsReadOnly = true;
+            }
+            else
+            {
+                destination.CreationTime = sourceFile.CreationTime;
+                destination.LastWriteTime = sourceFile.LastWriteTime;
+                destination.LastAccessTime = sourceFile.LastAccessTime;
+            }
+        }
+    }
     public class ReplicationTask : IPipelineTask
     {
         private class fileItem
@@ -32,6 +61,9 @@ namespace Fastnet.Services.Tasks
                 return obj.comparablePath.GetHashCode();
             }
         }
+
+        private const string replicaRootName = "replica";
+        private const string deletionsRootName = "deletions";
         private readonly ILogger log;
         private readonly WebDbContextFactory dbf;
         private readonly int sourceFolderId;
@@ -56,9 +88,9 @@ namespace Fastnet.Services.Tasks
                 if (available)
                 {
                     EnsurePresent(destinationFolder);
-                    var replicaFolder = Path.Combine(destinationFolder, "replica");
+                    var replicaFolder = Path.Combine(destinationFolder, replicaRootName);
                     EnsurePresent(replicaFolder);
-                    var deletionsFolder = Path.Combine(destinationFolder, "deletions");
+                    var deletionsFolder = Path.Combine(destinationFolder, deletionsRootName);
                     EnsurePresent(deletionsFolder);
                     // stages of replication
                     // 1. find all files that are no longer in the source
@@ -68,8 +100,8 @@ namespace Fastnet.Services.Tasks
                     // 3. find all files in the source that have changed and copy them
                     // Note 2 and 3 may be in the same pass
 
-                    ProcessDeletions(sf, replicaFolder, deletionsFolder);
-                    UpdateReplica(sf, replicaFolder);
+                    await ProcessDeletionsAsync(sf, replicaFolder, deletionsFolder);
+                    await UpdateReplicaAsync(sf, replicaFolder);
                 }
                 else
                 {
@@ -79,8 +111,9 @@ namespace Fastnet.Services.Tasks
             return null;
         }
 
-        private void UpdateReplica(SourceFolder sf, string replicaFolder)
+        private async Task UpdateReplicaAsync(SourceFolder sf, string replicaFolder)
         {
+            log.LogInformation("Searching for new and modified files...");
             var sourceFilelist = Directory.EnumerateFiles(sf.FullPath, "*.*", SearchOption.AllDirectories)
                 .Select(x => new fileItem { fullPath = x, comparablePath = x.Substring(sf.FullPath.Length + 1) });
             foreach (var fileItem in sourceFilelist)
@@ -91,8 +124,8 @@ namespace Fastnet.Services.Tasks
                 {
                     if (sourceFile.Length != replicaFile.Length || sourceFile.LastWriteTimeUtc != replicaFile.LastWriteTimeUtc)
                     {
-                        sourceFile.CopyTo(replicaFile.FullName, true);
-                        log.LogInformation($"{sf.FullPath} has changed - replaced in replica folder");
+                        await sourceFile.CopyToExactAsync(replicaFile.FullName);
+                        log.LogInformation($"{sourceFile.FullName} has changed - replaced in replica folder");
                     }
                 }
                 else
@@ -102,7 +135,7 @@ namespace Fastnet.Services.Tasks
                     {
                         containingFolder.Create();
                     }
-                    sourceFile.CopyTo(replicaFile.FullName);
+                    await sourceFile.CopyToExactAsync(replicaFile.FullName);
                     log.LogInformation($"New file {sourceFile.FullName} found - copied to replica folder");
                 }
             }
@@ -119,8 +152,9 @@ namespace Fastnet.Services.Tasks
             }
         }
 
-        private void ProcessDeletions(SourceFolder sf, string replicaFolder, string deletionsFolder)
+        private async Task ProcessDeletionsAsync(SourceFolder sf, string replicaFolder, string deletionsFolder)
         {
+            log.LogInformation("Searching for deleted files and folders...");
             var sourceFilelist = Directory.EnumerateFiles(sf.FullPath, "*.*", SearchOption.AllDirectories)
                 .Select(x => new fileItem { fullPath = x, comparablePath = x.Substring(sf.FullPath.Length + 1) });
             var replicaFilelist = Directory.EnumerateFiles(replicaFolder, "*.*", SearchOption.AllDirectories)
@@ -128,23 +162,21 @@ namespace Fastnet.Services.Tasks
             var deletionFileList = replicaFilelist.Except(sourceFilelist, new fileComparer());
             if (deletionFileList.Count() > 0)
             {
-                // create zip file name
-                // zip these files
-                // remove them from replica
-                var now = DateTimeOffset.Now;
-                var datePart = $"{(now.ToString("yyyy.MM.dd.HHmmss"))}";
-                var backupFileName = $"{datePart}.zip";
-                using (var archive = new FileStream(Path.Combine(deletionsFolder, backupFileName), FileMode.CreateNew))
+                var timeFolder = DateTimeOffset.Now.ToString("yyyy.MM.dd.HHmmss");
+                foreach(var fileName in deletionFileList)
                 {
-                    using (var za = new ZipArchive(archive, ZipArchiveMode.Update))
+                    var fileInfo = new FileInfo(fileName.fullPath);
+                    var name = fileName.fullPath.Substring(replicaFolder.Length + 1);
+                    var targetName = Path.Combine(deletionsFolder, timeFolder, name);
+                    var folder = Path.GetDirectoryName(targetName);
+                    if(!Directory.Exists(folder))
                     {
-                        foreach (var fi in deletionFileList)
-                        {
-                            var entry = za.CreateEntryFromFile(fi.fullPath, fi.comparablePath);
-                            log.LogInformation($"Deleted file {entry.FullName} moved to {backupFileName}");
-                            File.Delete(fi.fullPath);
-                        }
+                        Directory.CreateDirectory(folder);
                     }
+                    await fileInfo.CopyToExactAsync(targetName);
+                    log.LogInformation($"Deleted file {fileInfo.FullName} moved to {targetName}");
+                    fileInfo.IsReadOnly = false;
+                    fileInfo.Delete();
                 }
             }
             var sourceDirectorylist = Directory.EnumerateDirectories(sf.FullPath, "*.*", SearchOption.AllDirectories)
@@ -152,12 +184,18 @@ namespace Fastnet.Services.Tasks
             var replicaDirectorylist = Directory.EnumerateDirectories(replicaFolder, "*.*", SearchOption.AllDirectories)
                 .Select(x => new fileItem { fullPath = x, comparablePath = x.Substring(replicaFolder.Length + 1) });
             var deletionDirectoryList = replicaDirectorylist.Except(sourceDirectorylist, new fileComparer());
-            foreach (var fi in deletionDirectoryList)
+            var deletionQueue = new Queue<DirectoryInfo>(deletionDirectoryList.Select(x => new DirectoryInfo(x.fullPath)));
+            while(deletionQueue.Count() > 0)
             {
-                if (Directory.Exists(fi.fullPath))
+                var item = deletionQueue.Dequeue();
+                if (item.EnumerateFileSystemInfos().Count() > 0)
                 {
-                    Directory.Delete(fi.fullPath);
-                    log.LogInformation($"Deleted folder {fi.fullPath} removed from replica");
+                    deletionQueue.Enqueue(item);
+                }
+                else
+                {
+                    item.Delete();
+                    log.LogInformation($"Deleted folder {item.FullName} removed from replica");
                 }
             }
         }

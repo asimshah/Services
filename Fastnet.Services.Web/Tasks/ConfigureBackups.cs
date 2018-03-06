@@ -23,8 +23,10 @@ namespace Fastnet.Services.Tasks
         private readonly string schedule;
         private ServiceDb db;
         private readonly SchedulerService schedulerService;
-        private readonly WebDbContextFactory dbf;
-        public ConfigureBackups(ILoggerFactory loggerFactory, WebDbContextFactory dbf, IHostedService hostedService,
+        private readonly ServiceDbContextFactory dbf;
+        //public ConfigureBackups(ILoggerFactory loggerFactory, WebDbContextFactory dbf, IHostedService hostedService,
+        //    IOptionsMonitor<ServiceOptions> options) : base(loggerFactory)
+        public ConfigureBackups(ILoggerFactory loggerFactory, ServiceDbContextFactory dbf, IHostedService hostedService,
             IOptionsMonitor<ServiceOptions> options) : base(loggerFactory)
         {
             //log.LogInformation("Configuration constructor called");

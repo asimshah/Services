@@ -16,8 +16,8 @@ namespace Fastnet.Services.Tasks
         private ServiceOptions options;
         private readonly string schedule;
         private ServiceDb db;
-        private readonly WebDbContextFactory dbf;
-        public ReplicationService(WebDbContextFactory dbf, IOptions<ServiceOptions> option, ILoggerFactory loggerFactory) : base(loggerFactory)
+        private readonly ServiceDbContextFactory dbf;
+        public ReplicationService(ServiceDbContextFactory dbf, IOptions<ServiceOptions> option, ILoggerFactory loggerFactory) : base(loggerFactory)
         {
             this.options = option.Value;
             this.dbf = dbf;
