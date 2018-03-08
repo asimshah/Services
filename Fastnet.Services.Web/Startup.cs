@@ -14,6 +14,7 @@ using Fastnet.Services.Data;
 using Fastnet.Services.Tasks;
 using Microsoft.Extensions.Options;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 
 namespace Fastnet.Services.Web
 {
@@ -23,6 +24,7 @@ namespace Fastnet.Services.Web
         public Startup(IConfiguration configuration, ILogger<Startup> logger)
         {
             this.log = logger;
+            //applicationLifetime.ApplicationStopping.Register()
             Configuration = configuration;
         }
 
@@ -39,10 +41,11 @@ namespace Fastnet.Services.Web
             //services.AddDbContext<ServiceDb>();
             services.AddMvc();
             services.AddFastnetServiceTasks(Configuration);
+            
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, IApplicationLifetime applicationLifetime)
         {
             var serverAddresses = app.ServerFeatures.Get<IServerAddressesFeature>();
             if(serverAddresses != null)

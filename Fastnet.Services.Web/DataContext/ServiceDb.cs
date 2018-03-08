@@ -119,7 +119,7 @@ namespace Fastnet.Services.Data
         }
         internal void Seed()
         {
-            Debug.WriteLine("Seeding started");
+            //Debug.WriteLine("Seeding started");
         }
     }
 }

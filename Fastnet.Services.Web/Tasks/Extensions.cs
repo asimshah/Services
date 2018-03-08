@@ -12,6 +12,7 @@ namespace Fastnet.Services.Tasks
         {
             services.AddScheduler(configuration)
                 //.AddSingleton<ScheduledTask, DiagnosticTask>()
+                .AddSingleton<RealtimeTask, RealTimeReplicationTask>()
                 .AddSingleton<ScheduledTask, ConfigureBackups>()
                 .AddSingleton<ScheduledTask, BackupService>()
                 .AddSingleton<ScheduledTask, ReplicationService>()
