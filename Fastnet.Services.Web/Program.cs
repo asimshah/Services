@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Hosting.WindowsServices;
 using Microsoft.Extensions.DependencyInjection;
 using System.ServiceProcess;
 using Fastnet.Core.Web.Logging;
+using Fastnet.Core;
 
 namespace Fastnet.Services.Web
 {
@@ -95,19 +96,19 @@ namespace Fastnet.Services.Web
 
         protected override void OnStarting(string[] args)
         {
-            log.LogInformation("OnStarting() called.");
+            log.Information("OnStarting() called.");
             base.OnStarting(args);
         }
 
         protected override void OnStarted()
         {
-            log.LogInformation("OnStarted() called.");
+            log.Information("OnStarted() called.");
             base.OnStarted();
         }
 
         protected override void OnStopping()
         {
-            log.LogInformation("OnStopping() called.");
+            log.Information("OnStopping() called.");
             base.OnStopping();
         }
     }

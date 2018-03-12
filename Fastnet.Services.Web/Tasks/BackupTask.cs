@@ -1,4 +1,5 @@
-﻿using Fastnet.Core.Web;
+﻿using Fastnet.Core;
+using Fastnet.Core.Web;
 using Fastnet.Services.Data;
 using Fastnet.Services.Web;
 using Microsoft.EntityFrameworkCore;
@@ -122,7 +123,7 @@ namespace Fastnet.Services.Tasks
                     if (!Directory.Exists(destinationFolder))
                     {
                         Directory.CreateDirectory(destinationFolder);
-                        log.LogInformation($"{destinationFolder} created");
+                        log.Information($"{destinationFolder} created");
                     }
                     var isPending = await IsBackupPending(sf);
                     if (isPending.result)
@@ -136,7 +137,7 @@ namespace Fastnet.Services.Tasks
                         backup.State = BackupState.Started;
                         var now = DateTimeOffset.Now;
                         var todaysScheduledTime = new DateTimeOffset(now.Year, now.Month, now.Day, sf.ScheduledTime, 0, 0, now.Offset);
-                        log.LogInformation($"Backup of {sf.DisplayName} to {destinationFolder} started ({(todaysScheduledTime.ToString("ddMMMyyyy HH:mm:ss"))})");
+                        log.Information($"Backup of {sf.DisplayName} to {destinationFolder} started ({(todaysScheduledTime.ToString("ddMMMyyyy HH:mm:ss"))})");
                         if (sf.Type == SourceType.Website)
                         {
                             TakeSiteOffline(sf);
@@ -147,17 +148,17 @@ namespace Fastnet.Services.Tasks
                             if (File.Exists(backup.FullPath))
                             {
                                 File.Delete(backup.FullPath);
-                                log.LogWarning($"{backup.FullPath} deleted");
+                                log.Warning($"{backup.FullPath} deleted");
                             }
                             zip(sf.FullPath, backup.FullPath);
                             backup.State = BackupState.Finished;
                             backup.BackedUpOn = DateTimeOffset.Now;
                             await db.SaveChangesAsync();
-                            log.LogInformation($"Backup of {sf.DisplayName} to {backup.FullPath} completed");
+                            log.Information($"Backup of {sf.DisplayName} to {backup.FullPath} completed");
                         }
                         catch (Exception xe)
                         {
-                            log.LogError(xe, $"backup failed {sf.DisplayName} to {backup.FullPath}");
+                            log.Error(xe, $"backup failed {sf.DisplayName} to {backup.FullPath}");
                             backup.State = BackupState.Failed;
                             backup.BackedUpOn = DateTimeOffset.Now;
                             await db.SaveChangesAsync();
@@ -174,12 +175,12 @@ namespace Fastnet.Services.Tasks
                     }
                     else
                     {
-                        log.LogInformation($"Backup of {sf.DisplayName} is not pending");
+                        log.Information($"Backup of {sf.DisplayName} is not pending");
                     }
                 }
                 else
                 {
-                    log.LogWarning($"{sf.DisplayName}: {sf.FullPath} not backed up as destination is not available" );
+                    log.Warning($"{sf.DisplayName}: {sf.FullPath} not backed up as destination is not available" );
                 }
             }
             return null;
@@ -200,12 +201,12 @@ namespace Fastnet.Services.Tasks
                             db.Backups.Remove(b);
                             await db.SaveChangesAsync();
                             File.Delete(b.FullPath);
-                            log.LogInformation($"Backup {b.FullPath} purged");
+                            log.Information($"Backup {b.FullPath} purged");
                         }
                     }
                     catch (Exception xe)
                     {
-                        log.LogError(xe, $"File purge failed: {b.FullPath}");
+                        log.Error(xe, $"File purge failed: {b.FullPath}");
                     }
                 }
             }            

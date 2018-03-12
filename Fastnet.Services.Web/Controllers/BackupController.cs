@@ -24,15 +24,16 @@ namespace Fastnet.Services.Web.Controllers
     {
         private readonly ILogger log;
         private readonly ServiceDb serviceDb;
+        //private readonly IServiceProvider sp;
         private readonly SchedulerService schedulerService;
         private ServiceOptions serviceOptions;
-        public BackupController(IOptionsMonitor<ServiceOptions> options, IHostedService hostedService, ILogger<BackupController> logger, ServiceDb serviceDb, IHostingEnvironment env) : base(env)
+        public BackupController(IOptionsMonitor<ServiceOptions> options, IServiceProvider sp, ILogger<BackupController> logger, ServiceDb serviceDb, IHostingEnvironment env) : base(env)
         {
             this.serviceOptions = options.CurrentValue;
             options.OnChangeWithDelay((opt) => this.serviceOptions = opt);
             this.log = logger;
             this.serviceDb = serviceDb;
-            this.schedulerService = hostedService as SchedulerService;
+            this.schedulerService = sp.GetSchedulerService();// hostedService as SchedulerService;
             //this.serviceDb.Database.EnsureCreated();
         }
         [HttpGet("test")]
@@ -44,7 +45,7 @@ namespace Fastnet.Services.Web.Controllers
             foreach(var sf in sourceFolders)
             {
                 (bool available, string folder) = sf.GetDestinationFolder(serviceOptions);
-                log.LogInformation($"{available}, {folder}");
+                log.Information($"{available}, {folder}");
             }
 
             return SuccessDataResult(sourceFolders);

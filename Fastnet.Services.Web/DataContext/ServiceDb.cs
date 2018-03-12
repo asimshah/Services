@@ -1,4 +1,5 @@
-﻿using Fastnet.Core.Web;
+﻿using Fastnet.Core;
+using Fastnet.Core.Web;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
@@ -31,18 +32,18 @@ namespace Fastnet.Services.Data
 
             if (dbExists)
             {
-                logger.LogInformation("ServiceDb exists");
+                logger.Information("ServiceDb exists");
             }
             else
             {
-                logger.LogWarning("No ServiceDb found - migrate() is probably not going to work");
+                logger.Warning("No ServiceDb found");
             }
             db.Database.Migrate();
-            logger.LogInformation("The following migrations have been applied:");
+            logger.Information("The following migrations have been applied:");
             var migrations = db.Database.GetAppliedMigrations();
             foreach (var migration in migrations)
             {
-                logger.LogInformation($"\t{migration}");
+                logger.Information($"\t{migration}");
             }
             db.Seed();
         }

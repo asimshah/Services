@@ -1,4 +1,5 @@
-﻿using Fastnet.Core.Cron;
+﻿using Fastnet.Core;
+using Fastnet.Core.Cron;
 using Fastnet.Core.Web;
 using Fastnet.Services.Web;
 using Microsoft.Extensions.Logging;
@@ -61,14 +62,14 @@ namespace Fastnet.Services.Tasks
                         var r = await Poll(item);
                         if (r)
                         {
-                            log.LogInformation($"Poll {item.Url} succeeded");
+                            log.Information($"Poll {item.Url} succeeded");
                         }
                     }
                 } 
             }
             else
             {
-                log.LogInformation("no urls provided");
+                log.Information("no urls provided");
             }
             return null;
         }
@@ -86,7 +87,7 @@ namespace Fastnet.Services.Tasks
                     }
                     else
                     {
-                        log.LogError($"Poll to {item.Url} failed with response {response.StatusCode}");
+                        log.Error($"Poll to {item.Url} failed with response {response.StatusCode}");
                     } 
                 }
             }
@@ -117,12 +118,12 @@ namespace Fastnet.Services.Tasks
         }
         private async Task BeforeStart(ScheduleMode m)
         {
-            log.LogInformation("before start");
+            log.Information("before start");
             await Task.Delay(0);
         }
         private async Task AfterFinish(ScheduleMode m)
         {
-            log.LogInformation("after finish");
+            log.Information("after finish");
             await Task.Delay(0);
         }
     }

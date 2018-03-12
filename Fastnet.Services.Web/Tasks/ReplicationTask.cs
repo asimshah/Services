@@ -1,4 +1,5 @@
-﻿using Fastnet.Core.Web;
+﻿using Fastnet.Core;
+using Fastnet.Core.Web;
 using Fastnet.Services.Data;
 using Fastnet.Services.Web;
 using Microsoft.EntityFrameworkCore;
@@ -105,7 +106,7 @@ namespace Fastnet.Services.Tasks
                 }
                 else
                 {
-                    log.LogWarning($"{sf.DisplayName}: {sf.FullPath} not replicated as destination is not available");
+                    log.Warning($"{sf.DisplayName}: {sf.FullPath} not replicated as destination is not available");
                 }
             }
             return null;
@@ -113,7 +114,7 @@ namespace Fastnet.Services.Tasks
 
         private async Task UpdateReplicaAsync(SourceFolder sf, string replicaFolder)
         {
-            log.LogInformation("Searching for new and modified files...");
+            log.Information("Searching for new and modified files...");
             var sourceFilelist = Directory.EnumerateFiles(sf.FullPath, "*.*", SearchOption.AllDirectories)
                 .Select(x => new fileItem { fullPath = x, comparablePath = x.Substring(sf.FullPath.Length + 1) });
             foreach (var fileItem in sourceFilelist)
@@ -125,7 +126,7 @@ namespace Fastnet.Services.Tasks
                     if (sourceFile.Length != replicaFile.Length || sourceFile.LastWriteTimeUtc != replicaFile.LastWriteTimeUtc)
                     {
                         await sourceFile.CopyToExactAsync(replicaFile.FullName);
-                        log.LogInformation($"{sourceFile.FullName} has changed - replaced in replica folder");
+                        log.Information($"{sourceFile.FullName} has changed - replaced in replica folder");
                     }
                 }
                 else
@@ -136,7 +137,7 @@ namespace Fastnet.Services.Tasks
                         containingFolder.Create();
                     }
                     await sourceFile.CopyToExactAsync(replicaFile.FullName);
-                    log.LogInformation($"New file {sourceFile.FullName} found - copied to replica folder");
+                    log.Information($"New file {sourceFile.FullName} found - copied to replica folder");
                 }
             }
             var sourceDirectorylist = Directory.EnumerateDirectories(sf.FullPath, "*.*", SearchOption.AllDirectories)
@@ -148,13 +149,13 @@ namespace Fastnet.Services.Tasks
             {
                 var replicaDirectory = Path.Combine(replicaFolder, dir.comparablePath);
                 Directory.CreateDirectory(replicaDirectory);
-                log.LogInformation($"Empty folder {replicaDirectory} created");
+                log.Information($"Empty folder {replicaDirectory} created");
             }
         }
 
         private async Task ProcessDeletionsAsync(SourceFolder sf, string replicaFolder, string deletionsFolder)
         {
-            log.LogInformation("Searching for deleted files and folders...");
+            log.Information("Searching for deleted files and folders...");
             var sourceFilelist = Directory.EnumerateFiles(sf.FullPath, "*.*", SearchOption.AllDirectories)
                 .Select(x => new fileItem { fullPath = x, comparablePath = x.Substring(sf.FullPath.Length + 1) });
             var replicaFilelist = Directory.EnumerateFiles(replicaFolder, "*.*", SearchOption.AllDirectories)
@@ -174,7 +175,7 @@ namespace Fastnet.Services.Tasks
                         Directory.CreateDirectory(folder);
                     }
                     await fileInfo.CopyToExactAsync(targetName);
-                    log.LogInformation($"Deleted file {fileInfo.FullName} moved to {targetName}");
+                    log.Information($"Deleted file {fileInfo.FullName} moved to {targetName}");
                     fileInfo.IsReadOnly = false;
                     fileInfo.Delete();
                 }
@@ -195,7 +196,7 @@ namespace Fastnet.Services.Tasks
                 else
                 {
                     item.Delete();
-                    log.LogInformation($"Deleted folder {item.FullName} removed from replica");
+                    log.Information($"Deleted folder {item.FullName} removed from replica");
                 }
             }
         }

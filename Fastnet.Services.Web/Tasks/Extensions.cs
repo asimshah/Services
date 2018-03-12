@@ -1,4 +1,5 @@
-﻿using Fastnet.Core.Web;
+﻿using Fastnet.Core;
+using Fastnet.Core.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Fastnet.Services.Web;
@@ -10,6 +11,7 @@ namespace Fastnet.Services.Tasks
     {
         public static IServiceCollection AddFastnetServiceTasks(this IServiceCollection services, IConfiguration configuration)
         {
+            services.AddSingleton<FileSystemMonitorFactory>();
             services.AddScheduler(configuration)
                 //.AddSingleton<ScheduledTask, DiagnosticTask>()
                 .AddSingleton<RealtimeTask, RealTimeReplicationTask>()
