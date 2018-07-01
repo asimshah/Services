@@ -9,7 +9,7 @@ using Fastnet.Services.Data;
 using Fastnet.Core.Web.Controllers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
+//using Microsoft.Extensions.Hosting;
 using Fastnet.Core.Web;
 using Fastnet.Services.Tasks;
 using Microsoft.Extensions.Options;
@@ -27,7 +27,7 @@ namespace Fastnet.Services.Web.Controllers
         //private readonly IServiceProvider sp;
         private readonly SchedulerService schedulerService;
         private ServiceOptions serviceOptions;
-        public BackupController(IOptionsMonitor<ServiceOptions> options, IServiceProvider sp, ILogger<BackupController> logger, ServiceDb serviceDb, IHostingEnvironment env) : base(env)
+        public BackupController(IOptionsMonitor<ServiceOptions> options, IServiceProvider sp, ILogger<BackupController> logger, ServiceDb serviceDb, IHostingEnvironment env) : base(logger, env)
         {
             this.serviceOptions = options.CurrentValue;
             options.OnChangeWithDelay((opt) => this.serviceOptions = opt);

@@ -19,11 +19,11 @@ namespace Fastnet.Services.Tasks
         private readonly string schedule;
         private ServiceDb db;
         private readonly ServiceDbContextFactory dbf;
-        public BackupService(ServiceDbContextFactory dbf, IOptions<ServiceOptions> option, ILoggerFactory loggerFactory) : base(loggerFactory)
+        public BackupService(ServiceDbContextFactory dbf, IOptions<SchedulerOptions> schedulerOptions, IOptions<ServiceOptions> option, ILoggerFactory loggerFactory) : base(loggerFactory)
         {
             this.options = option.Value;
             this.dbf = dbf;
-            var serviceSchedule = this.options.ServiceSchedules?.FirstOrDefault(sc => string.Compare(sc.Name, this.GetType().Name) == 0);
+            var serviceSchedule = schedulerOptions.Value.Schedules?.FirstOrDefault(sc => string.Compare(sc.Name, this.GetType().Name) == 0);
             schedule = serviceSchedule?.Schedule ?? "0 0 1 */12 *";// default is At 00:00 AM, on day 1 of the month, every 12 months!! not useful!
             BeforeTaskStartsAsync = async (m) => { await OnTaskStart(); };
             

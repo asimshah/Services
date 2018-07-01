@@ -25,12 +25,12 @@ namespace Fastnet.Services.Tasks
         private Dictionary<string, pollWrapper> pollingControl;
         private ServiceOptions options;
         private readonly string schedule;
-        public PollingService(IOptions<ServiceOptions> option, ILoggerFactory loggerFactory) : base(loggerFactory)
+        public PollingService(IOptions<SchedulerOptions> schedulerOptions, IOptions<ServiceOptions> serviceOptions, ILoggerFactory loggerFactory) : base(loggerFactory)
         {
             try
             {
-                this.options = option.Value;
-                var serviceSchedule = this.options.ServiceSchedules?.FirstOrDefault(sc => string.Compare(sc.Name, this.GetType().Name) == 0);
+                this.options = serviceOptions.Value;
+                var serviceSchedule = schedulerOptions.Value.Schedules?.FirstOrDefault(sc => string.Compare(sc.Name, this.GetType().Name) == 0);
                 schedule = serviceSchedule.Schedule;
                 pollingControl = new Dictionary<string, pollWrapper>();
                 //BeforeTaskStartsAsync = async (m) => { await BeforeStart(m); };
