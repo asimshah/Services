@@ -16,7 +16,6 @@ using Microsoft.Extensions.Hosting;
 
 namespace Fastnet.Services.Tasks
 {
-
     public class RealTimeReplicationTask : RealtimeTask
     {
         private SchedulerService schedulerService;
@@ -41,7 +40,7 @@ namespace Fastnet.Services.Tasks
         }
         public override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            log.Information($"{nameof(ExecuteAsync)}");
+            //log.Information($"{nameof(ExecuteAsync)}");
             this.cancellationToken = cancellationToken;
             //await Initialise();
             await StartAsync();
@@ -102,8 +101,15 @@ namespace Fastnet.Services.Tasks
                 var folders = db.SourceFolders.Where(x => x.BackupEnabled && x.Type == Web.SourceType.ReplicationSource).ToArray();        
                 foreach (var folder in folders.Select(x => x))
                 {
-                    var fsm = AddMonitor(folder);
-                    sources.Add(folder, fsm);
+                    if (Directory.Exists(folder.FullPath))
+                    {
+                        var fsm = AddMonitor(folder);
+                        sources.Add(folder, fsm);
+                    }
+                    else
+                    {
+                        log.Warning($"{folder.DisplayName}: path {folder.FullPath} not found");
+                    }
                 }
             }
             foreach (var kvp in sources)

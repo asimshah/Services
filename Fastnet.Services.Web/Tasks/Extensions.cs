@@ -18,7 +18,8 @@ namespace Fastnet.Services.Tasks
                 .AddSingleton<ScheduledTask, ConfigureBackups>()
                 .AddSingleton<ScheduledTask, BackupService>()
                 .AddSingleton<ScheduledTask, ReplicationService>()
-                .AddSingleton<ScheduledTask, PollingService>()
+                .AddSingleton<RealtimeTask, PollingService>()
+                .AddSingleton<ScheduledTask, InformationService>()
             ;           
             return services;
         }

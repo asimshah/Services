@@ -46,6 +46,10 @@ namespace Fastnet.Services.Web
                 .UseContentRoot(pathToContentRoot)
                 .ConfigureLogging(x => x.AddWebRollingFile())
                 .UseStartup<Startup>()
+                //.ConfigureServices(services =>
+                //{
+                //    services.AddSingleton
+                //})
                 //.UseApplicationInsights()
                 .UseUrls("http://localhost:5566")
                 .Build();

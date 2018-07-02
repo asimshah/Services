@@ -20,13 +20,13 @@ namespace Fastnet.Services.Tasks
     public class ConfigureBackups : ScheduledTask, IPipelineTask
     {
         private ServiceOptions options;
-        private readonly string schedule;
+        //private readonly string schedule;
         private ServiceDb db;
         private readonly IServiceProvider sp;
         private readonly SchedulerService schedulerService;
         private readonly ServiceDbContextFactory dbf;
         public ConfigureBackups(ILoggerFactory loggerFactory, ServiceDbContextFactory dbf, IServiceProvider sp,// IHostedService hostedService,
-            IOptions<SchedulerOptions> schedulerOptions, IOptionsMonitor<ServiceOptions> options) : base(loggerFactory)
+            /*IOptions<SchedulerOptions> schedulerOptions,*/ IOptionsMonitor<ServiceOptions> options) : base(loggerFactory)
         {
             //log.LogInformation("Configuration constructor called");
             this.dbf = dbf;
@@ -40,12 +40,12 @@ namespace Fastnet.Services.Tasks
                 log.Information("Configuration (appsettings) changed, starting ConfigureBackups");
                 this.schedulerService.ExecuteNow<ConfigureBackups>();
             });
-            var backupSchedule = schedulerOptions.Value.Schedules?.FirstOrDefault(sc => string.Compare(sc.Name, this.GetType().Name) == 0);
-            schedule = backupSchedule?.Schedule ?? "0 0 1 */12 *";// default is At 00:00 AM, on day 1 of the month, every 12 months!! not useful!
+            //var backupSchedule = schedulerOptions.Value.Schedules?.FirstOrDefault(sc => string.Compare(sc.Name, this.GetType().Name) == 0);
+            //schedule = backupSchedule?.Schedule ?? "0 0 1 */12 *";// default is At 00:00 AM, on day 1 of the month, every 12 months!! not useful!
             SetupPipeline();
         }
         public override TimeSpan StartAfter => TimeSpan.Zero;
-        public override string Schedule => schedule;
+        //public override string Schedule => schedule;
         public string Name => "ConfigureBackups";
         public TaskMethod ExecuteAsync => DoTask;
         private async Task<ITaskState> DoTask(ITaskState taskState, ScheduleMode mode, CancellationToken cancellationToken)

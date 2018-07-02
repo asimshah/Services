@@ -1,8 +1,11 @@
-﻿namespace Fastnet.Services.Web
+﻿using Fastnet.Core.Cron;
+
+namespace Fastnet.Services.Web
 {
     public class PollingSchedule
     {
         public string Url { get; set; }
         public string Schedule { get; set; }
+        //public CrontabSchedule ParsedSchedule { get; set; }
     }
 }
