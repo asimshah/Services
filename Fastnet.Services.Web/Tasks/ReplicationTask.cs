@@ -67,7 +67,8 @@ namespace Fastnet.Services.Tasks
         private const string deletionsRootName = "deletions";
         private readonly ILogger log;
         private readonly WebDbContextFactory dbf;
-        private readonly int sourceFolderId;
+        //private readonly int sourceFolderId;
+        private SourceFolder sourceFolder;
         private readonly ServiceOptions options;
         private ServiceDb db;
         public ReplicationTask(ServiceOptions options, int sourceFolderId, WebDbContextFactory dbf, ILogger log)
@@ -75,46 +76,79 @@ namespace Fastnet.Services.Tasks
             this.options = options;
             this.log = log;
             this.dbf = dbf;
-            this.sourceFolderId = sourceFolderId;
+            using (db = dbf.GetWebDbContext<ServiceDb>())
+            {
+                this.sourceFolder = db.SourceFolders
+                    .Single(x => x.Id == sourceFolderId);
+            }
+            //this.sourceFolderId = sourceFolderId;
         }
-        public string Name => $"ReplicationTask - source folder id {sourceFolderId}";
+        public string Name => $"ReplicationTask - {this.sourceFolder.DisplayName}";
         public TaskMethod ExecuteAsync => DoTask;
         private async Task<ITaskState> DoTask(ITaskState taskState, ScheduleMode mode, CancellationToken cancellationToken)
         {
-            using (db = dbf.GetWebDbContext<ServiceDb>())
+            try
             {
-                var sf = await db.SourceFolders
-                    .SingleAsync(x => x.Id == sourceFolderId);
-                (bool available, string destinationFolder) = sf.GetDestinationFolder(options);
-                if (available)
+                using (db = dbf.GetWebDbContext<ServiceDb>())
                 {
-                    EnsurePresent(destinationFolder);
-                    var replicaFolder = Path.Combine(destinationFolder, replicaRootName);
-                    EnsurePresent(replicaFolder);
-                    var deletionsFolder = Path.Combine(destinationFolder, deletionsRootName);
-                    EnsurePresent(deletionsFolder);
-                    // stages of replication
-                    // 1. find all files that are no longer in the source
-                    //    and move them into the deletions folder as a zip file
-                    // 2. find all files in the source that are not in the replica
-                    //     and copy them
-                    // 3. find all files in the source that have changed and copy them
-                    // Note 2 and 3 may be in the same pass
+                    var sf = await db.SourceFolders
+                        .SingleAsync(x => x.Id == this.sourceFolder.Id);
+                    if (sf.CanAccess())
+                    {
+                        (bool available, string destinationFolder) = sf.GetDestinationFolder(options);
+                        if (available)
+                        {
+                            EnsurePresent(destinationFolder);
+                            var replicaFolder = Path.Combine(destinationFolder, replicaRootName);
+                            EnsurePresent(replicaFolder);
+                            var deletionsFolder = Path.Combine(destinationFolder, deletionsRootName);
+                            EnsurePresent(deletionsFolder);
+                            // stages of replication
+                            // 1. find all files that are no longer in the source
+                            //    and move them into the deletions folder
+                            // 2. find all files in the source that are not in the replica
+                            //     and copy them
+                            // 3. find all files in the source that have changed and copy them
+                            // Note 2 and 3 may be in the same pass
 
-                    await ProcessDeletionsAsync(sf, replicaFolder, deletionsFolder);
-                    await UpdateReplicaAsync(sf, replicaFolder);
+                            await ProcessDeletionsAsync(sf, replicaFolder, deletionsFolder);
+                            await UpdateReplicaAsync(sf, replicaFolder);
+                        }
+                        else
+                        {
+                            log.Warning($"{sf.DisplayName}: {sf.FullPath} not replicated as destination is not available");
+                        }
+                    }
+                    else
+                    {
+                        log.Warning($"{sf.DisplayName}, cannot access {sf.FullPath}");
+                    }
                 }
-                else
-                {
-                    log.Warning($"{sf.DisplayName}: {sf.FullPath} not replicated as destination is not available");
-                }
+            }
+            catch (Exception xe)
+            {
+                log.Error(xe);
             }
             return null;
         }
 
+        //private bool CanAccess(string fullPath)
+        //{
+        //    var result = false;
+        //    try
+        //    {
+        //        if (Directory.EnumerateFileSystemEntries(fullPath) != null)
+        //        {
+        //            result = true;
+        //        }
+        //    }
+        //    catch { }
+        //    return result;
+        //}
+
         private async Task UpdateReplicaAsync(SourceFolder sf, string replicaFolder)
         {
-            log.Information("Searching for new and modified files...");
+            log.Information($"{sf.DisplayName}, searching for new and modified files...");
             var sourceFilelist = Directory.EnumerateFiles(sf.FullPath, "*.*", SearchOption.AllDirectories)
                 .Select(x => new fileItem { fullPath = x, comparablePath = x.Substring(sf.FullPath.Length + 1) });
             foreach (var fileItem in sourceFilelist)
@@ -155,7 +189,7 @@ namespace Fastnet.Services.Tasks
 
         private async Task ProcessDeletionsAsync(SourceFolder sf, string replicaFolder, string deletionsFolder)
         {
-            log.Information("Searching for deleted files and folders...");
+            log.Information($"{sf.DisplayName}, searching for deleted files and folders...");
             var sourceFilelist = Directory.EnumerateFiles(sf.FullPath, "*.*", SearchOption.AllDirectories)
                 .Select(x => new fileItem { fullPath = x, comparablePath = x.Substring(sf.FullPath.Length + 1) });
             var replicaFilelist = Directory.EnumerateFiles(replicaFolder, "*.*", SearchOption.AllDirectories)

@@ -16,7 +16,7 @@ namespace Fastnet.Services.Tasks
     {
         //private string lastBackupDrive;
         private ServiceOptions options;
-        private readonly string schedule;
+        //private readonly string schedule;
         private ServiceDb db;
         private readonly ServiceDbContextFactory dbf;
         public BackupService(ServiceDbContextFactory dbf, /*IOptions<SchedulerOptions> schedulerOptions,*/ IOptions<ServiceOptions> option, ILoggerFactory loggerFactory) : base(loggerFactory)

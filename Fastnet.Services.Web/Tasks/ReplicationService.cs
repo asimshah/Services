@@ -14,7 +14,7 @@ namespace Fastnet.Services.Tasks
     public class ReplicationService: ScheduledTask
     {
         private ServiceOptions options;
-        private readonly string schedule;
+        //private readonly string schedule;
         private ServiceDb db;
         private readonly ServiceDbContextFactory dbf;
         public ReplicationService(ServiceDbContextFactory dbf,/* IOptions<SchedulerOptions> schedulerOptions,*/ IOptions<ServiceOptions> serviceOptions, ILoggerFactory loggerFactory) : base(loggerFactory)

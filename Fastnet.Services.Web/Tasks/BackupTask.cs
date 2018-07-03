@@ -18,7 +18,8 @@ namespace Fastnet.Services.Tasks
     {
         private readonly ILogger log;
         private readonly ServiceDbContextFactory dbf;
-        private readonly int sourceFolderId;
+        //private readonly int sourceFolderId;
+        private SourceFolder sourceFolder;
         private readonly ServiceOptions options;
         private ServiceDb db;
         public BackupTask(ServiceOptions options, int sourceFolderId, ServiceDbContextFactory dbf, ILogger log)
@@ -26,162 +27,101 @@ namespace Fastnet.Services.Tasks
             this.options = options;
             this.log = log;
             this.dbf = dbf;
-            this.sourceFolderId = sourceFolderId;
+            using (db = dbf.GetWebDbContext<ServiceDb>())
+            {
+                this.sourceFolder = db.SourceFolders
+                    .Single(x => x.Id == sourceFolderId);
+            }
+            //this.sourceFolderId = sourceFolderId;
         }
-        public string Name => $"BackupTask - source folder id {sourceFolderId}";
+        public string Name => $"BackupTask - {this.sourceFolder.DisplayName}";
         public TaskMethod ExecuteAsync => DoTask;
         private async Task<ITaskState> DoTask(ITaskState taskState, ScheduleMode mode, CancellationToken cancellationToken)
         {
-            //if (options.IsBackupDestinationAvailable())
-            //{
-            //    using (db = dbf.GetWebDbContext<ServiceDb>())
-            //    {
-            //        var sf = await db.SourceFolders
-            //            .Include(x => x.Backups)
-            //            .SingleAsync(x => x.Id == sourceFolderId);
-            //        //log.LogInformation($"Backup task for source {sf.DisplayName}");
-            //        var defaultDestinationFolder = Path.Combine(options.GetDefaultBackupDestination(), sf.DisplayName);
-            //        if (!Directory.Exists(defaultDestinationFolder))
-            //        {
-            //            Directory.CreateDirectory(defaultDestinationFolder);
-            //            log.LogInformation($"{defaultDestinationFolder} created");
-            //        }
-            //        var isPending = await IsBackupPending(sf);
-            //        if (isPending.result)
-            //        {
-            //            //log.LogInformation($"Backup of {sf.GetFullname()} to {destinationFolder} is required");
-            //            var backup = isPending.backup;
-            //            var namePart = sf.DisplayName;
-            //            var datePart = $"{(backup.ScheduledOn.ToString("yyyy.MM.dd"))}";
-            //            var backupFileName = $"{namePart}.{datePart}.zip";
-            //            backup.FullPath = Path.Combine(defaultDestinationFolder, backupFileName);
-            //            backup.State = BackupState.Started;
-            //            var now = DateTimeOffset.Now;
-            //            var todaysScheduledTime = new DateTimeOffset(now.Year, now.Month, now.Day, sf.ScheduledTime, 0, 0, now.Offset);
-            //            log.LogInformation($"Backup of {sf.DisplayName} to {defaultDestinationFolder} started ({(todaysScheduledTime.ToString("ddMMMyyyy HH:mm:ss"))})");
-            //            if (sf.Type == SourceType.Website)
-            //            {
-            //                TakeSiteOffline(sf);
-            //            }
-            //            await db.SaveChangesAsync();
-            //            try
-            //            {
-            //                if (File.Exists(backup.FullPath))
-            //                {
-            //                    File.Delete(backup.FullPath);
-            //                    log.LogWarning($"{backup.FullPath} deleted");
-            //                }
-            //                zip(sf.FullPath, backup.FullPath);
-            //                backup.State = BackupState.Finished;
-            //                backup.BackedUpOn = DateTimeOffset.Now;
-            //                await db.SaveChangesAsync();
-            //                log.LogInformation($"Backup of {sf.DisplayName} to {backup.FullPath} completed");
-            //            }
-            //            catch (Exception xe)
-            //            {
-            //                log.LogError(xe, $"backup failed {sf.DisplayName} to {backup.FullPath}");
-            //                backup.State = BackupState.Failed;
-            //                backup.BackedUpOn = DateTimeOffset.Now;
-            //                await db.SaveChangesAsync();
-            //                //throw;
-            //            }
-            //            finally
-            //            {
-            //                if (sf.Type == SourceType.Website)
-            //                {
-            //                    BringSiteOnline(sf);
-            //                }
-            //            }
-            //            await PurgeBackups(sf);
-            //        }
-            //        else
-            //        {
 
-            //            log.LogInformation($"Backup of {sf.DisplayName} is not pending");
-            //        }
-            //    }
-            //}
-            //else
-            //{
-            //    foreach (var d in DriveInfo.GetDrives())
-            //    {
-            //        log.LogInformation($"Found drive {d.Name}, label {d.VolumeLabel}, ready = {d.IsReady}");
-            //    }
-            //    log.LogWarning($"Backup destination not available - no disk with volume label {options.BackupDriveLabel} found");
-            //}
-            using (db = dbf.GetWebDbContext<ServiceDb>())
+            try
             {
-                var sf = await db.SourceFolders
-                    .Include(x => x.Backups)
-                    .SingleAsync(x => x.Id == sourceFolderId);
-                //log.LogInformation($"Backup task for source {sf.DisplayName}");
-                //var defaultDestinationFolder = Path.Combine(options.GetDefaultBackupDestination(), sf.DisplayName);
-                //var defaultDestinationFolder = sf.GetDestinationFolder(options);// Path.Combine(options.GetDefaultBackupDestination(), sf.DisplayName);
-                (bool available, string destinationFolder) = sf.GetDestinationFolder(options);
-                if (available)
+                using (db = dbf.GetWebDbContext<ServiceDb>())
                 {
-                    if (!Directory.Exists(destinationFolder))
+                    var sf = await db.SourceFolders
+                        .Include(x => x.Backups)
+                        .SingleAsync(x => x.Id == this.sourceFolder.Id);
+                    if (sf.CanAccess())
                     {
-                        Directory.CreateDirectory(destinationFolder);
-                        log.Information($"{destinationFolder} created");
-                    }
-                    var isPending = await IsBackupPending(sf);
-                    if (isPending.result)
-                    {
-                        //log.LogInformation($"Backup of {sf.GetFullname()} to {destinationFolder} is required");
-                        var backup = isPending.backup;
-                        var namePart = sf.DisplayName;
-                        var datePart = $"{(backup.ScheduledOn.ToString("yyyy.MM.dd"))}";
-                        var backupFileName = $"{namePart}.{datePart}.zip";
-                        backup.FullPath = Path.Combine(destinationFolder, backupFileName);
-                        backup.State = BackupState.Started;
-                        var now = DateTimeOffset.Now;
-                        var todaysScheduledTime = new DateTimeOffset(now.Year, now.Month, now.Day, sf.ScheduledTime, 0, 0, now.Offset);
-                        log.Information($"Backup of {sf.DisplayName} to {destinationFolder} started ({(todaysScheduledTime.ToString("ddMMMyyyy HH:mm:ss"))})");
-                        if (sf.Type == SourceType.Website)
+                        (bool available, string destinationFolder) = sf.GetDestinationFolder(options);
+                        if (available)
                         {
-                            TakeSiteOffline(sf);
-                        }
-                        await db.SaveChangesAsync();
-                        try
-                        {
-                            if (File.Exists(backup.FullPath))
+                            if (!Directory.Exists(destinationFolder))
                             {
-                                File.Delete(backup.FullPath);
-                                log.Warning($"{backup.FullPath} deleted");
+                                Directory.CreateDirectory(destinationFolder);
+                                log.Information($"{destinationFolder} created");
                             }
-                            zip(sf.FullPath, backup.FullPath);
-                            backup.State = BackupState.Finished;
-                            backup.BackedUpOn = DateTimeOffset.Now;
-                            await db.SaveChangesAsync();
-                            log.Information($"Backup of {sf.DisplayName} to {backup.FullPath} completed");
-                        }
-                        catch (Exception xe)
-                        {
-                            log.Error(xe, $"backup failed {sf.DisplayName} to {backup.FullPath}");
-                            backup.State = BackupState.Failed;
-                            backup.BackedUpOn = DateTimeOffset.Now;
-                            await db.SaveChangesAsync();
-                            //throw;
-                        }
-                        finally
-                        {
-                            if (sf.Type == SourceType.Website)
+                            var isPending = await IsBackupPending(sf);
+                            if (isPending.result)
                             {
-                                BringSiteOnline(sf);
+                                var backup = isPending.backup;
+                                var namePart = sf.DisplayName;
+                                var datePart = $"{(backup.ScheduledOn.ToString("yyyy.MM.dd"))}";
+                                var backupFileName = $"{namePart}.{datePart}.zip";
+                                backup.FullPath = Path.Combine(destinationFolder, backupFileName);
+                                backup.State = BackupState.Started;
+                                var now = DateTimeOffset.Now;
+                                var todaysScheduledTime = new DateTimeOffset(now.Year, now.Month, now.Day, sf.ScheduledTime, 0, 0, now.Offset);
+                                log.Information($"Backup of {sf.DisplayName} to {destinationFolder} started ({(todaysScheduledTime.ToString("ddMMMyyyy HH:mm:ss"))})");
+                                if (sf.Type == SourceType.Website)
+                                {
+                                    TakeSiteOffline(sf);
+                                }
+                                await db.SaveChangesAsync();
+                                try
+                                {
+                                    if (File.Exists(backup.FullPath))
+                                    {
+                                        File.Delete(backup.FullPath);
+                                        log.Warning($"{backup.FullPath} deleted");
+                                    }
+                                    zip(sf.FullPath, backup.FullPath);
+                                    backup.State = BackupState.Finished;
+                                    backup.BackedUpOn = DateTimeOffset.Now;
+                                    await db.SaveChangesAsync();
+                                    log.Information($"Backup of {sf.DisplayName} to {backup.FullPath} completed");
+                                }
+                                catch (Exception xe)
+                                {
+                                    log.Error(xe, $"backup failed {sf.DisplayName} to {backup.FullPath}");
+                                    backup.State = BackupState.Failed;
+                                    backup.BackedUpOn = DateTimeOffset.Now;
+                                    await db.SaveChangesAsync();
+                                    //throw;
+                                }
+                                finally
+                                {
+                                    if (sf.Type == SourceType.Website)
+                                    {
+                                        BringSiteOnline(sf);
+                                    }
+                                }
+                                await PurgeBackups(sf);
+                            }
+                            else
+                            {
+                                log.Information($"Backup of {sf.DisplayName} is not pending");
                             }
                         }
-                        await PurgeBackups(sf);
+                        else
+                        {
+                            log.Warning($"{sf.DisplayName}: {sf.FullPath} not backed up as destination is not available");
+                        }
                     }
                     else
                     {
-                        log.Information($"Backup of {sf.DisplayName} is not pending");
+                        log.Warning($"{sf.DisplayName}, cannot access {sf.FullPath}");
                     }
                 }
-                else
-                {
-                    log.Warning($"{sf.DisplayName}: {sf.FullPath} not backed up as destination is not available" );
-                }
+            }
+            catch (Exception xe)
+            {
+                log.Error(xe);
             }
             return null;
         }

@@ -4,6 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Fastnet.Services.Web;
 using Microsoft.Extensions.Options;
+using Fastnet.Services.Data;
+using System.IO;
 
 namespace Fastnet.Services.Tasks
 {
@@ -22,6 +24,19 @@ namespace Fastnet.Services.Tasks
                 .AddSingleton<ScheduledTask, InformationService>()
             ;           
             return services;
+        }
+        public static bool CanAccess(this SourceFolder sf)
+        {
+            var result = false;
+            try
+            {
+                if (Directory.EnumerateFileSystemEntries(sf.FullPath) != null)
+                {
+                    result = true;
+                }
+            }
+            catch { }
+            return result;
         }
     }
 }
