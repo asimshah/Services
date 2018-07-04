@@ -67,7 +67,7 @@ namespace Fastnet.Services.Tasks
                                 backup.State = BackupState.Started;
                                 var now = DateTimeOffset.Now;
                                 var todaysScheduledTime = new DateTimeOffset(now.Year, now.Month, now.Day, sf.ScheduledTime, 0, 0, now.Offset);
-                                log.Information($"Backup of {sf.DisplayName} to {destinationFolder} started ({(todaysScheduledTime.ToString("ddMMMyyyy HH:mm:ss"))})");
+                                //log.Information($"Backup of {sf.DisplayName} to {destinationFolder} started ({(todaysScheduledTime.ToString("ddMMMyyyy HH:mm:ss"))})");
                                 if (sf.Type == SourceType.Website)
                                 {
                                     TakeSiteOffline(sf);
@@ -105,7 +105,7 @@ namespace Fastnet.Services.Tasks
                             }
                             else
                             {
-                                log.Information($"Backup of {sf.DisplayName} is not pending");
+                                log.Debug($"Backup of {sf.DisplayName} is not pending");
                             }
                         }
                         else

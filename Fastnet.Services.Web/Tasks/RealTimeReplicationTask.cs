@@ -140,7 +140,10 @@ namespace Fastnet.Services.Tasks
                 switch(item.Type)
                 {
                     case WatcherChangeTypes t when (t & WatcherChangeTypes.All) > 0 :
-                        log.Information($"{item.Type.ToString()}, path: {item.Path}, oldPath: {item.OldPath ?? "none"}");
+                        if (!item.Path.Contains("pr$obe.txt"))
+                        {
+                            log.Information($"{item.Type.ToString()}, path: {item.Path}, oldPath: {item.OldPath ?? "none"}");
+                        }
                         break;
                 }
             }

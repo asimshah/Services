@@ -113,6 +113,7 @@ namespace Fastnet.Services.Tasks
 
                             await ProcessDeletionsAsync(sf, replicaFolder, deletionsFolder);
                             await UpdateReplicaAsync(sf, replicaFolder);
+                            log.Information($"{sf.DisplayName}: {sf.FullPath} replication finished");
                         }
                         else
                         {
@@ -148,7 +149,7 @@ namespace Fastnet.Services.Tasks
 
         private async Task UpdateReplicaAsync(SourceFolder sf, string replicaFolder)
         {
-            log.Information($"{sf.DisplayName}, searching for new and modified files...");
+            log.Debug($"{sf.DisplayName}, searching for new and modified files...");
             var sourceFilelist = Directory.EnumerateFiles(sf.FullPath, "*.*", SearchOption.AllDirectories)
                 .Select(x => new fileItem { fullPath = x, comparablePath = x.Substring(sf.FullPath.Length + 1) });
             foreach (var fileItem in sourceFilelist)
@@ -160,7 +161,7 @@ namespace Fastnet.Services.Tasks
                     if (sourceFile.Length != replicaFile.Length || sourceFile.LastWriteTimeUtc != replicaFile.LastWriteTimeUtc)
                     {
                         await sourceFile.CopyToExactAsync(replicaFile.FullName);
-                        log.Information($"{sourceFile.FullName} has changed - replaced in replica folder");
+                        log.Debug($"{sourceFile.FullName} has changed - replaced in replica folder");
                     }
                 }
                 else
@@ -171,7 +172,7 @@ namespace Fastnet.Services.Tasks
                         containingFolder.Create();
                     }
                     await sourceFile.CopyToExactAsync(replicaFile.FullName);
-                    log.Information($"New file {sourceFile.FullName} found - copied to replica folder");
+                    log.Debug($"New file {sourceFile.FullName} found - copied to replica folder");
                 }
             }
             var sourceDirectorylist = Directory.EnumerateDirectories(sf.FullPath, "*.*", SearchOption.AllDirectories)
@@ -183,13 +184,13 @@ namespace Fastnet.Services.Tasks
             {
                 var replicaDirectory = Path.Combine(replicaFolder, dir.comparablePath);
                 Directory.CreateDirectory(replicaDirectory);
-                log.Information($"Empty folder {replicaDirectory} created");
+                log.Debug($"Empty folder {replicaDirectory} created");
             }
         }
 
         private async Task ProcessDeletionsAsync(SourceFolder sf, string replicaFolder, string deletionsFolder)
         {
-            log.Information($"{sf.DisplayName}, searching for deleted files and folders...");
+            log.Debug($"{sf.DisplayName}, searching for deleted files and folders...");
             var sourceFilelist = Directory.EnumerateFiles(sf.FullPath, "*.*", SearchOption.AllDirectories)
                 .Select(x => new fileItem { fullPath = x, comparablePath = x.Substring(sf.FullPath.Length + 1) });
             var replicaFilelist = Directory.EnumerateFiles(replicaFolder, "*.*", SearchOption.AllDirectories)
@@ -209,7 +210,7 @@ namespace Fastnet.Services.Tasks
                         Directory.CreateDirectory(folder);
                     }
                     await fileInfo.CopyToExactAsync(targetName);
-                    log.Information($"Deleted file {fileInfo.FullName} moved to {targetName}");
+                    log.Debug($"Deleted file {fileInfo.FullName} moved to {targetName}");
                     fileInfo.IsReadOnly = false;
                     fileInfo.Delete();
                 }
@@ -230,7 +231,7 @@ namespace Fastnet.Services.Tasks
                 else
                 {
                     item.Delete();
-                    log.Information($"Deleted folder {item.FullName} removed from replica");
+                    log.Debug($"Deleted folder {item.FullName} removed from replica");
                 }
             }
         }

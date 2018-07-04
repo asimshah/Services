@@ -99,10 +99,10 @@ namespace Fastnet.Services.Tasks
                     var rrt = this.sp.GetRealtimeTask<RealTimeReplicationTask>();
                     rrt.Restart();
                 }
-                else
-                {
-                    log.Information($"Backup and replication configuration unchanged");
-                }
+                //else
+                //{
+                //    log.Information($"Backup and replication configuration unchanged");
+                //}
                 //var count = db.SourceFolders.Count();
                 //log.LogInformation($"found {count} source folders in database");
                 return null;
