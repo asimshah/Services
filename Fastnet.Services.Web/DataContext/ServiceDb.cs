@@ -20,7 +20,10 @@ namespace Fastnet.Services.Data
 {
     public class ServiceDbOptions : WebDbOptions
     {
-
+        public ServiceDbOptions()
+        {
+            this.DisableLazyLoading = true;
+        }
     }
     public static class ServiceDbInitialiser
     {
