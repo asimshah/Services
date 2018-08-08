@@ -28,6 +28,15 @@ namespace Fastnet.Services.Web
         {
             string backupDriveLabel = sf.BackupDriveLabel ?? options.BackupDriveLabel;
             string backupFolder = sf.BackupFolder ?? options.BackupFolder;
+            if(backupFolder.StartsWith("$"))
+            {
+                return (true, backupFolder.Substring(1));
+            }
+            if(Path.IsPathRooted(backupFolder) && backupFolder[1] == ':')
+            {
+                return (true, @"\\?\" + backupFolder);
+            }
+            
             (bool available, string drive, string rootFolder) = IsBackupDriveAvailable(backupDriveLabel);
             if(available)
             {
